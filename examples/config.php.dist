@@ -1,0 +1,22 @@
+<?php
+
+define('CDN_URL', 'MY_CDN_URL'); // only used for SQL CSV export to replace product image URLs
+
+/**
+ * From site credentials
+ */
+define('FROM_SHOPIFY_API_KEY', 'INSERT_API_KEY');
+define('FROM_SHOPIFY_API_PASSWORD', 'INSERT_API_PASS');
+define('FROM_SHOPIFY_API_SECRET', 'INSERT_API_SECRET');
+define('FROM_SHOPIFY_HOST', 'INSERT_SHOPIFY_HOST');
+define('FROM_SHOPIFY_API_URL', 'https://'.FROM_SHOPIFY_API_KEY.':'.FROM_SHOPIFY_API_PASSWORD.'@'.FROM_SHOPIFY_HOST.'.myshopify.com/admin/');
+
+
+/**
+ * To site credentials
+ */
+define('TO_SHOPIFY_API_KEY', 'INSERT_API_KEY');
+define('TO_SHOPIFY_API_PASSWORD', 'INSERT_API_PASS');
+define('TO_SHOPIFY_API_SECRET', 'INSERT_API_SECRET');
+define('TO_SHOPIFY_HOST', 'INSERT_SHOPIFY_HOST');
+define('TO_SHOPIFY_API_URL', 'https://'.TO_SHOPIFY_API_KEY.':'.TO_SHOPIFY_API_PASSWORD.'@'.TO_SHOPIFY_HOST.'.myshopify.com/admin/');
