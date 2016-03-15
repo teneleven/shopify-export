@@ -45,9 +45,7 @@ class Shopify
 
     public function createBlog($title)
     {
-        $request = new Request('POST', 'blogs.json', [
-            'form_params' => ['blog' => ['title' => $title]],
-        ]);
+        $request = new Request('POST', 'blogs.json', ['blog' => ['title' => $title]]);
 
         return $this->submitRequest($request);
     }
@@ -55,10 +53,8 @@ class Shopify
     public function getArticles($blogID, $page = 1)
     {
         $request = new Request('GET', 'blogs/'.$blogID.'/articles.json', [
-            'form_params' => [
-                'limit' => 250,
-                'page' => $page,
-            ],
+            'limit' => 250,
+            'page' => $page,
         ]);
 
         return $this->paginate($request);
@@ -94,9 +90,7 @@ class Shopify
             unset($params['article']['blog_id']);
         }
 
-        $request = new Request('POST', 'blogs/'.$blogID.'/articles.json', [
-            'json' => $params,
-        ]);
+        $request = new Request('POST', 'blogs/'.$blogID.'/articles.json', $params);
 
         return $this->submitRequest($request);
     }
@@ -112,9 +106,7 @@ class Shopify
         $params['article']['id'] = $articleID;
         $params['article']['blog_id'] = $blogID;
 
-        $request = new Request('PUT', 'blogs/'.$blogID.'/articles/'.$articleID.'.json', [
-            'json' => $params,
-        ]);
+        $request = new Request('PUT', 'blogs/'.$blogID.'/articles/'.$articleID.'.json', $params);
 
         return $this->submitRequest($request);
     }
@@ -137,10 +129,8 @@ class Shopify
     public function getPages($page = 1)
     {
         $request = new Request('GET', 'pages.json', [
-            'form_params' => [
-                'limit' => 250,
-                'page' => $page,
-            ],
+            'limit' => 250,
+            'page' => $page,
         ]);
 
         return $this->paginate($request);
@@ -148,48 +138,96 @@ class Shopify
 
     public function createPage($page)
     {
-        $request = new Request('POST', 'pages.json', [
-            'form_params' => $this->toParams('page', $page),
-        ]);
+        $request = new Request('POST', 'pages.json', $this->toParams('page', $page));
 
         return $this->submitRequest($request);
     }
 
     public function updatePage($pageID, $page)
     {
-        $request = new Request('PUT', 'pages/'.$pageID.'.json', [
-            'form_params' => $this->toParams('page', $page),
-        ]);
+        $request = new Request('PUT', 'pages/'.$pageID.'.json', $this->toParams('page', $page));
 
         return $this->submitRequest($request);
     }
 
     public function getProducts($page = 1)
     {
-        $request = new Request('GET', 'products.json', [
-            'form_params' => [
-                'limit' => 250,
-                'page' => $page,
-            ],
+        $request = new Api\ProductRequest('GET', 'products.json', [
+            'limit' => 250,
+            'page' => $page,
         ]);
 
         return $this->paginate($request);
     }
 
+    public function createOrUpdateProduct($product)
+    {
+        if (isset($product->variants)) {
+            // remove variant IDs (triggers creation of new variant)
+            foreach ($product->variants as $key => $variant) {
+                if (isset($variant->id)) {
+                    unset($variant->id);
+                    $product->variants[$key] = $variant;
+                }
+            }
+        }
+
+        if ($result = $this->getProductsResponse()->getResult('handle', $product->handle)) {
+            // update
+            echo "Resource found - {$result->title} {$result->id}\n";
+
+            // update variant IDs - this triggers an update of existing variants
+            if (isset($result->variants)) {
+                foreach ($result->variants as $key => $variant) {
+                    if (isset($variant->id) && isset($product->variants[$key])) {
+                        $product->variants[$key]->id = $variant->id;
+                    }
+                }
+            }
+
+            return $this->updateProduct($result->id, $product);
+        }
+
+        // create
+        echo "Resource not found, creating - {$product->title}\n";
+
+        return $this->createProduct($product);
+    }
+
     public function createProduct($product)
     {
-        $request = new Request('POST', 'customers.json', [
-            'form_params' => $this->toParams('product', $product),
-        ]);
+        $request = new Api\ProductRequest('POST', 'products.json', (array) $product);
 
         return $this->submitRequest($request);
     }
 
     public function updateProduct($productID, $product)
     {
-        $request = new Request('PUT', 'products/'.$productID.'.json', [
-            'form_params' => $this->toParams('product', $product),
+        $request = new Api\ProductRequest('PUT', 'products/'.$productID.'.json', (array) $product);
+
+        return $this->submitRequest($request);
+    }
+
+    public function getCollections($page = 1)
+    {
+        $request = new Request('GET', 'custom_collections.json', [
+            'limit' => 250,
+            'page' => $page,
         ]);
+
+        return $this->paginate($request);
+    }
+
+    public function createCollection($collection)
+    {
+        $request = new Request('POST', 'custom_collections.json', ['custom_collection' => (array) $collection]);
+
+        return $this->submitRequest($request);
+    }
+
+    public function updateCollection($collectionID, $collection)
+    {
+        $request = new Request('PUT', 'custom_collections/'.$collectionID.'.json', ['custom_collection' => (array) $collection]);
 
         return $this->submitRequest($request);
     }
@@ -197,10 +235,8 @@ class Shopify
     public function getCustomers($page = 1)
     {
         $request = new Request('GET', 'customers.json', [
-            'form_params' => [
-                'limit' => 250,
-                'page' => $page,
-            ],
+            'limit' => 250,
+            'page' => $page,
         ]);
 
         return $this->paginate($request);
@@ -208,18 +244,14 @@ class Shopify
 
     public function createCustomer($customer)
     {
-        $request = new Request('POST', 'customers.json', [
-            'form_params' => $this->toParams('customer', $customer),
-        ]);
+        $request = new Request('POST', 'customers.json', $this->toParams('customer', $customer));
 
         return $this->submitRequest($request);
     }
 
     public function updateCustomer($customerID, $customer)
     {
-        $request = new Request('PUT', 'customers/'.$customerID.'.json', [
-            'form_params' => $this->toParams('customer', $customer),
-        ]);
+        $request = new Request('PUT', 'customers/'.$customerID.'.json', $this->toParams('customer', $customer));
 
         return $this->submitRequest($request);
     }
@@ -227,11 +259,9 @@ class Shopify
     public function redirect($fromUrl, $toUrl)
     {
         $request = new Request('POST', 'redirects.json', [
-            'form_params' => [
-                'redirect' => [
-                    'path' => $fromUrl,
-                    'target' => $toUrl,
-                ],
+            'redirect' => [
+                'path' => $fromUrl,
+                'target' => $toUrl,
             ],
         ]);
 
@@ -295,6 +325,21 @@ class Shopify
             // check that the endpoint is the same
             if ($this->cachedRequest->getEndpoint() !== 'pages.json') {
                 $this->cacheResults($this->getPages());
+            }
+        }
+
+        return $this->cachedResponse;
+    }
+
+    private function getProductsResponse()
+    {
+        // only way to search for a resource efficiently is to cache the result set
+        if (!$this->cachedResponse) {
+            $this->cacheResults($this->getProducts());
+        } else {
+            // check that the endpoint is the same
+            if ($this->cachedRequest->getEndpoint() !== 'products.json') {
+                $this->cacheResults($this->getProducts());
             }
         }
 

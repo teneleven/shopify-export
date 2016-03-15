@@ -7,15 +7,15 @@ namespace Shopify;
  */
 class Request
 {
-    private $method;
-    private $endpoint;
-    private $params;
+    protected $method;
+    protected $endpoint;
+    protected $params;
 
     public function __construct($method = 'GET', $endpoint, $params = [])
     {
         $this->method = $method;
         $this->endpoint = $endpoint;
-        $this->params = $params;
+        $this->params = $this->filterParams($params);
     }
 
     /**
@@ -51,5 +51,17 @@ class Request
         } else {
             throw new \RuntimeException('No page request param found in Request');
         }
+    }
+
+    /**
+     * Override in child class.
+     */
+    protected function filterParams(array $params)
+    {
+        if (array_key_exists('form_params', $params)) {
+            return $params;
+        }
+
+        return ['form_params' => $params];
     }
 }
