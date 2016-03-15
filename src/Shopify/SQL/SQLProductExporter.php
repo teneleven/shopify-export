@@ -1,6 +1,6 @@
 <?php
 
-namespace Shopify;
+namespace Shopify\SQL;
 
 /**
  * Simple shopify product exporter class, meant to used to export from SQL databse -> Shopify store.
