@@ -5,7 +5,7 @@ namespace Shopify\Util;
 class Slugify
 {
     /**
-     * Simple slugify method
+     * Simple slugify method.
      */
     public static function slugify($text)
     {
@@ -27,8 +27,7 @@ class Slugify
         // remove unwanted characters
         $text = preg_replace('~[^-\w]+~', '', $text);
 
-        if (empty($text))
-        {
+        if (empty($text)) {
             return 'n-a';
         }
 

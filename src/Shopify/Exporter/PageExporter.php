@@ -14,7 +14,7 @@ class PageExporter extends AbstractExporter
         $paginator = $this->from->getPages();
 
         while ($paginator->hasResults()) {
-            $pages = $paginator->getResults();
+            $pages = $paginator->getResponse()->getResults();
             foreach ($pages as $page) {
                 $to->createOrUpdatePage($page);
             }

@@ -8,7 +8,7 @@ namespace Shopify\SQL;
  * To use, initialize using constructor to set DB config, then call the export method with the SQL & params to export to
  * shopify as args.
  */
-class ShopifyProductExporter
+class SQLProductExporter
 {
     /**
      * Standard shopify header.
@@ -169,8 +169,8 @@ class ShopifyProductExporter
      * @param array $mapping column header => SQL alias
      *
      * @throws \Exception
-     * @return array
      *
+     * @return array
      */
     protected function parseRow(array $row, array $mapping)
     {

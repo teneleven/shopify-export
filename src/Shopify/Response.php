@@ -10,28 +10,49 @@ use Psr\Http\Message\ResponseInterface as ApiResponse;
 class Response
 {
     /**
-     * @var ApiResponse
+     * @var mixed
      */
-    private $apiResponse;
+    private $results;
 
-    public function __construct(ApiResponse $apiResponse)
+    public function __construct($results)
     {
-        $this->apiResponse = $apiResponse;
+        $this->results = $results;
+    }
+
+    public static function fromApiResponse(ApiResponse $response)
+    {
+        $results = (array) json_decode((string) $response->getBody());
+
+        if (!count($results)) {
+            return new static([]);
+        }
+
+        return new static(array_shift($results));
     }
 
     public function __toString()
     {
-        return (string) $this->apiResponse->getBody();
+        return json_encode($this->results);
     }
 
     public function getResults()
     {
-        $results = (array) json_decode((string) $this->apiResponse->getBody());
+        return $this->results;
+    }
 
-        if (!count($results)) {
-            return [];
+    /**
+     * Lookup specific result by key.
+     */
+    public function getResult($key, $value)
+    {
+        if (!is_array($this->results)) {
+            return;
         }
 
-        return array_shift($results);
+        foreach ($this->results as $result) {
+            if (isset($result->$key) && $result->$key === $value) {
+                return $result;
+            }
+        }
     }
 }

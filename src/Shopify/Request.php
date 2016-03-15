@@ -45,11 +45,11 @@ class Request
     public function nextPage()
     {
         if (array_key_exists('form_params', $this->params) && array_key_exists('page', $this->params['form_params'])) {
-            $this->params['form_params']['page'] ++;
+            ++$this->params['form_params']['page'];
         } elseif (array_key_exists('page', $this->params)) {
-            $this->params['page'] ++;
+            ++$this->params['page'];
         } else {
-            throw new \RuntimeException('Paginator cannot find page request param');
+            throw new \RuntimeException('No page request param found in Request');
         }
     }
 }

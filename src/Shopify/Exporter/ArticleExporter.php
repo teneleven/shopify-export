@@ -3,7 +3,6 @@
 namespace Shopify\Exporter;
 
 use Shopify\Shopify;
-use GuzzleHttp\Exception\ClientException;
 
 /**
  * Exports articles from shopify store -> shopify store.
@@ -43,7 +42,7 @@ class ArticleExporter extends AbstractExporter
 
         $paginator = $this->from->getArticles($blog->id);
         while ($paginator->hasResults()) {
-            $articles = $paginator->getResults();
+            $articles = $paginator->getResponse()->getResults();
             foreach ($articles as $article) {
                 $to->createOrUpdateArticle($toBlogId, $article);
             }

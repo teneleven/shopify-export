@@ -15,9 +15,14 @@ class Shopify
     private $client;
 
     /**
-     * @var Paginator
+     * @var Response
      */
     private $cachedResponse;
+
+    /**
+     * @var Request
+     */
+    private $cachedRequest;
 
     public function __construct(ClientInterface $client)
     {
@@ -41,7 +46,7 @@ class Shopify
     public function createBlog($title)
     {
         $request = new Request('POST', 'blogs.json', [
-            'form_params' => ['blog' => ['title' => $title]]
+            'form_params' => ['blog' => ['title' => $title]],
         ]);
 
         return $this->submitRequest($request);
@@ -68,9 +73,10 @@ class Shopify
 
     public function createOrUpdateArticle($blogID, $article)
     {
-        if ($result = $this->getArticlesPaginator()->getResult('title', $article->title)) {
+        if ($result = $this->getArticlesResponse($blogID)->getResult('title', $article->title)) {
             // update
             echo "Resource found - {$result->title} {$result->id}\n";
+
             return $this->updateArticle($blogID, $result->id, $article);
         }
 
@@ -115,9 +121,10 @@ class Shopify
 
     public function createOrUpdatePage($page)
     {
-        if ($result = $this->getPagesPaginator()->getResult('handle', $page->handle)) {
+        if ($result = $this->getPagesResponse()->getResult('handle', $page->handle)) {
             // update
             echo "Resource found - {$result->title} {$result->id}\n";
+
             return $this->updatePage($result->id, $page);
         }
 
@@ -163,7 +170,7 @@ class Shopify
             'form_params' => [
                 'limit' => 250,
                 'page' => $page,
-            ]
+            ],
         ]);
 
         return $this->paginate($request);
@@ -193,7 +200,7 @@ class Shopify
             'form_params' => [
                 'limit' => 250,
                 'page' => $page,
-            ]
+            ],
         ]);
 
         return $this->paginate($request);
@@ -233,7 +240,7 @@ class Shopify
 
     private function submitRequest(Request $request)
     {
-        $response = new Response($this->client->request(
+        $response = Response::fromApiResponse($this->client->request(
             $request->getMethod(),
             $request->getEndpoint(),
             $request->getParams()
@@ -246,7 +253,7 @@ class Shopify
 
     private function paginate(Request $request)
     {
-        return new Paginator($this->client, $request);
+        return new Paginator\Paginator($this->client, $request);
     }
 
     private function toParams($param, $valueObject)
@@ -260,43 +267,44 @@ class Shopify
         return $params;
     }
 
-    private function getArticlesPaginator($blogID)
+    private function getArticlesResponse($blogID)
     {
         // only way to search for a resource efficiently is to cache the result set
         if (!$this->cachedResponse) {
-            $this->cachedResponse = $this->getArticles($blogID);
-            $this->cachedResponse->fetchResults();
+            $this->cacheResults($this->getArticles($blogID));
         } else {
             // check that the blog ID is the same
-            $cachedRequest = $this->cachedResponse->getRequest();
             $matches = [];
-            preg_match('#^blogs/([^/]*)/articles.*\.json$#', $cachedRequest->getEndpoint(), $matches);
+            preg_match('#^blogs/([^/]*)/articles.*\.json$#', $this->cachedRequest->getEndpoint(), $matches);
 
             // update new response
             if (count($matches) > 1 && $matches[1] != $blogID) {
-                $this->cachedResponse = $this->getArticles($blogID);
-                $this->cachedResponse->fetchResults();
+                $this->cacheResults($this->getArticles($blogID));
             }
         }
 
         return $this->cachedResponse;
     }
 
-    private function getPagesPaginator()
+    private function getPagesResponse()
     {
         // only way to search for a resource efficiently is to cache the result set
         if (!$this->cachedResponse) {
-            $this->cachedResponse = $this->getPages();
-            $this->cachedResponse->fetchResults();
+            $this->cacheResults($this->getPages());
         } else {
             // check that the endpoint is the same
-            $cachedRequest = $this->cachedResponse->getRequest();
-            if ($cachedRequest->getEndpoint() !== 'pages.json') {
-                $this->cachedResponse = $this->getPages();
-                $this->cachedResponse->fetchResults();
+            if ($this->cachedRequest->getEndpoint() !== 'pages.json') {
+                $this->cacheResults($this->getPages());
             }
         }
 
         return $this->cachedResponse;
+    }
+
+    private function cacheResults(Paginator\Paginator $paginator)
+    {
+        $walker = new Paginator\PaginationWalker($paginator);
+        $this->cachedResponse = $walker->getResponse();
+        $this->cachedRequest = $walker->getRequest();
     }
 }
