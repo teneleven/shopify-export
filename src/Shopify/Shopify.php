@@ -69,7 +69,7 @@ class Shopify
 
     public function createOrUpdateArticle($blogID, $article)
     {
-        if ($result = $this->getArticlesResponse($blogID)->getResult('title', $article->title)) {
+        if ($result = $this->walk($this->getArticles($blogID))->getResult('title', $article->title)) {
             // update
             echo "Resource found - {$result->title} {$result->id}\n";
 
@@ -113,7 +113,7 @@ class Shopify
 
     public function createOrUpdatePage($page)
     {
-        if ($result = $this->getPagesResponse()->getResult('handle', $page->handle)) {
+        if ($result = $this->walk($this->getPages())->getResult('handle', $page->handle)) {
             // update
             echo "Resource found - {$result->title} {$result->id}\n";
 
@@ -172,7 +172,7 @@ class Shopify
             }
         }
 
-        if ($result = $this->getProductsResponse()->getResult('handle', $product->handle)) {
+        if ($result = $this->walk($this->getProducts())->getResult('handle', $product->handle)) {
             // update
             echo "Resource found - {$result->title} {$result->id}\n";
 
@@ -218,6 +218,21 @@ class Shopify
         return $this->paginate($request);
     }
 
+    public function createOrUpdateCollection($collection)
+    {
+        if ($result = $this->walk($this->getCollections())->getResult('handle', $collection->handle)) {
+            // update
+            echo "Resource found - {$result->title} {$result->id}\n";
+
+            return $this->updateCollection($result->id, $collection);
+        }
+
+        // create
+        echo "Resource not found, creating - {$collection->title}\n";
+
+        return $this->createCollection($collection);
+    }
+
     public function createCollection($collection)
     {
         $request = new Request('POST', 'custom_collections.json', ['custom_collection' => (array) $collection]);
@@ -228,6 +243,30 @@ class Shopify
     public function updateCollection($collectionID, $collection)
     {
         $request = new Request('PUT', 'custom_collections/'.$collectionID.'.json', ['custom_collection' => (array) $collection]);
+
+        return $this->submitRequest($request);
+    }
+
+    public function getCollects($page = 1)
+    {
+        $request = new Request('GET', 'collects.json', [
+            'limit' => 250,
+            'page' => $page,
+        ]);
+
+        return $this->paginate($request);
+    }
+
+    public function createCollect($collect)
+    {
+        $request = new Request('POST', 'collects.json', ['collect' => (array) $collect]);
+
+        return $this->submitRequest($request);
+    }
+
+    public function updateCollect($collectID, $collect)
+    {
+        $request = new Request('PUT', 'collects/'.$collectID.'.json', ['collect' => (array) $collect]);
 
         return $this->submitRequest($request);
     }
@@ -268,6 +307,28 @@ class Shopify
         return $this->submitRequest($request);
     }
 
+    public function walk(Paginator\Paginator $paginator)
+    {
+        if (!$this->cachedResponse
+            || ($this->cachedRequest->getEndpoint() !== $paginator->getRequest()->getEndpoint())
+        ) {
+            $this->cacheResults($paginator);
+        }
+
+        return $this->cachedResponse;
+    }
+
+    /**
+     * Only way to search for a resource efficiently is to cache the result set.
+     */
+    private function cacheResults(Paginator\Paginator $paginator)
+    {
+        $walker = new Paginator\PaginationWalker($paginator);
+        $walker->fetchResults();
+        $this->cachedResponse = $walker->getResponse();
+        $this->cachedRequest = $walker->getRequest();
+    }
+
     private function submitRequest(Request $request)
     {
         $response = Response::fromApiResponse($this->client->request(
@@ -295,61 +356,5 @@ class Shopify
         }
 
         return $params;
-    }
-
-    private function getArticlesResponse($blogID)
-    {
-        // only way to search for a resource efficiently is to cache the result set
-        if (!$this->cachedResponse) {
-            $this->cacheResults($this->getArticles($blogID));
-        } else {
-            // check that the blog ID is the same
-            $matches = [];
-            preg_match('#^blogs/([^/]*)/articles.*\.json$#', $this->cachedRequest->getEndpoint(), $matches);
-
-            // update new response
-            if (count($matches) > 1 && $matches[1] != $blogID) {
-                $this->cacheResults($this->getArticles($blogID));
-            }
-        }
-
-        return $this->cachedResponse;
-    }
-
-    private function getPagesResponse()
-    {
-        // only way to search for a resource efficiently is to cache the result set
-        if (!$this->cachedResponse) {
-            $this->cacheResults($this->getPages());
-        } else {
-            // check that the endpoint is the same
-            if ($this->cachedRequest->getEndpoint() !== 'pages.json') {
-                $this->cacheResults($this->getPages());
-            }
-        }
-
-        return $this->cachedResponse;
-    }
-
-    private function getProductsResponse()
-    {
-        // only way to search for a resource efficiently is to cache the result set
-        if (!$this->cachedResponse) {
-            $this->cacheResults($this->getProducts());
-        } else {
-            // check that the endpoint is the same
-            if ($this->cachedRequest->getEndpoint() !== 'products.json') {
-                $this->cacheResults($this->getProducts());
-            }
-        }
-
-        return $this->cachedResponse;
-    }
-
-    private function cacheResults(Paginator\Paginator $paginator)
-    {
-        $walker = new Paginator\PaginationWalker($paginator);
-        $this->cachedResponse = $walker->getResponse();
-        $this->cachedRequest = $walker->getRequest();
     }
 }
