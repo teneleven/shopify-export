@@ -247,6 +247,45 @@ class Shopify
         return $this->submitRequest($request);
     }
 
+    public function getSmartCollections($page = 1)
+    {
+        $request = new Request('GET', 'smart_collections.json', [
+            'limit' => 250,
+            'page' => $page,
+        ]);
+
+        return $this->paginate($request);
+    }
+
+    public function createOrUpdateSmartCollection($collection)
+    {
+        if ($result = $this->walk($this->getSmartCollections())->getResult('handle', $collection->handle)) {
+            // update
+            echo "Resource found - {$result->title} {$result->id}\n";
+
+            return $this->updateSmartCollection($result->id, $collection);
+        }
+
+        // create
+        echo "Resource not found, creating - {$collection->title}\n";
+
+        return $this->createSmartCollection($collection);
+    }
+
+    public function createSmartCollection($collection)
+    {
+        $request = new Api\SmartCollectionRequest('POST', 'smart_collections.json', ['smart_collection' => (array) $collection]);
+
+        return $this->submitRequest($request);
+    }
+
+    public function updateSmartCollection($collectionID, $collection)
+    {
+        $request = new Api\SmartCollectionRequest('PUT', 'smart_collections/'.$collectionID.'.json', ['smart_collection' => (array) $collection]);
+
+        return $this->submitRequest($request);
+    }
+
     public function getCollects($page = 1)
     {
         $request = new Request('GET', 'collects.json', [
