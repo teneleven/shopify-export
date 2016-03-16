@@ -320,16 +320,31 @@ class Shopify
         return $this->paginate($request);
     }
 
+    public function createOrUpdateCustomer($customer)
+    {
+        if ($result = $this->walk($this->getCustomers())->getResult('email', $customer->email)) {
+            // update
+            echo "Resource found - {$result->first_name} {$result->last_name} {$result->id}\n";
+
+            return $this->updateCustomer($result->id, $customer);
+        }
+
+        // create
+        echo "Resource not found, creating - {$customer->first_name} {$customer->last_name}\n";
+
+        return $this->createCustomer($customer);
+    }
+
     public function createCustomer($customer)
     {
-        $request = new Request('POST', 'customers.json', $this->toParams('customer', $customer));
+        $request = new Api\CustomerRequest('POST', 'customers.json', (array) $customer);
 
         return $this->submitRequest($request);
     }
 
     public function updateCustomer($customerID, $customer)
     {
-        $request = new Request('PUT', 'customers/'.$customerID.'.json', $this->toParams('customer', $customer));
+        $request = new Api\CustomerRequest('PUT', 'customers/'.$customerID.'.json', (array) $customer);
 
         return $this->submitRequest($request);
     }
