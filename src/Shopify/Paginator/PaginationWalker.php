@@ -53,14 +53,14 @@ class PaginationWalker
     {
         if (null === $this->results) {
             $this->results = [];
+        }
 
-            if (count($results = $this->paginator->getResponse()->getResults())) {
-                $this->results += $results;
-                sleep(0.5); // avoid rate limit
-                $this->paginator->nextPage();
+        if (count($results = $this->paginator->getResponse()->getResults())) {
+            $this->results = array_merge($this->results, $results);
+            sleep(0.5); // avoid rate limit
+            $this->paginator->nextPage();
 
-                return $this->fetchResults();
-            }
+            return $this->fetchResults();
         }
 
         return $this->results;

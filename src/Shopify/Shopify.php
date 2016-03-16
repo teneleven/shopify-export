@@ -1,8 +1,8 @@
 <?php
-
 namespace Shopify;
 
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\ClientException;
 
 /**
  * Shopify api wrapper.
@@ -24,9 +24,15 @@ class Shopify
      */
     private $cachedRequest;
 
-    public function __construct(ClientInterface $client)
+    /**
+     * @var bool
+     */
+    private $debug;
+
+    public function __construct(ClientInterface $client, $debug = false)
     {
         $this->client = $client;
+        $this->debug = $debug ?: getenv('SHOPIFY_DEBUG');
     }
 
     public function getBlogs()
@@ -385,15 +391,23 @@ class Shopify
 
     private function submitRequest(Request $request)
     {
-        $response = Response::fromApiResponse($this->client->request(
-            $request->getMethod(),
-            $request->getEndpoint(),
-            $request->getParams()
-        ));
+        try {
+            $response = Response::fromApiResponse($this->client->request(
+                $request->getMethod(),
+                $request->getEndpoint(),
+                $request->getParams()
+            ));
 
-        sleep(0.5); // cheap way to prevent API rate limit
+            sleep(0.5); // cheap way to prevent API rate limit
 
-        return $response->getResults();
+            return $response->getResults();
+        } catch (ClientException $e) {
+            if ($this->debug) {
+                echo "API Error: ".$e->getResponse()->getBody()."\n";
+            } else {
+                throw $e;
+            }
+        }
     }
 
     private function paginate(Request $request)
