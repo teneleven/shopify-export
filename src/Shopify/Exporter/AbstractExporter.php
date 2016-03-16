@@ -7,7 +7,7 @@ use Shopify\Shopify;
 /**
  * Exports blogs from shopify store -> shopify store.
  */
-abstract class AbstractExporter
+abstract class AbstractExporter implements Exporter
 {
     /**
      * @var Shopify

@@ -423,7 +423,7 @@ class Shopify
                 $request->getParams()
             ));
 
-            sleep(0.5); // cheap way to prevent API rate limit
+            usleep(500000); // wait half second to avoid rate limit
 
             return $response->getResults();
         } catch (ClientException $e) {

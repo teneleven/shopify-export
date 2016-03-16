@@ -57,7 +57,7 @@ class PaginationWalker
 
         if (count($results = $this->paginator->getResponse()->getResults())) {
             $this->results = array_merge($this->results, $results);
-            sleep(0.5); // avoid rate limit
+            usleep(500000); // wait half second to avoid rate limit
             $this->paginator->nextPage();
 
             return $this->fetchResults();
