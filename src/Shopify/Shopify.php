@@ -355,6 +355,45 @@ class Shopify
         return $this->submitRequest($request);
     }
 
+    public function getOrders($page = 1)
+    {
+        $request = new Request('GET', 'orders.json', [
+            'limit' => 250,
+            'page' => $page,
+        ]);
+
+        return $this->paginate($request);
+    }
+
+    public function createOrUpdateOrder($order)
+    {
+        if ($result = $this->walk($this->getOrders())->getResult('name', $order->name)) {
+            // update
+            echo "Resource found - {$result->order_number} {$result->name} {$result->id}\n";
+
+            return $this->updateOrder($result->id, $order);
+        }
+
+        // create
+        echo "Resource not found, creating - {$order->order_number} {$order->name}\n";
+
+        return $this->createOrder($order);
+    }
+
+    public function createOrder($order)
+    {
+        $request = new Api\OrderRequest('POST', 'orders.json', (array) $order);
+
+        return $this->submitRequest($request);
+    }
+
+    public function updateOrder($orderID, $order)
+    {
+        $request = new Api\OrderRequest('PUT', 'orders/'.$orderID.'.json', (array) $order);
+
+        return $this->submitRequest($request);
+    }
+
     public function redirect($fromUrl, $toUrl)
     {
         $request = new Request('POST', 'redirects.json', [
