@@ -2,8 +2,8 @@
 
 namespace Shopify\Exporter;
 
-use Shopify\Shopify;
 use GuzzleHttp\Exception\ClientException;
+use Shopify\Shopify;
 
 /**
  * Exports blogs from shopify store -> shopify store.
@@ -69,7 +69,6 @@ class ProductCollectionExporter extends AbstractExporter
                     throw $e;
                 }
             }
-
         }
     }
 }

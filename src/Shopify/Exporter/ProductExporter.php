@@ -3,7 +3,6 @@
 namespace Shopify\Exporter;
 
 use Shopify\Shopify;
-use GuzzleHttp\Exception\ClientException;
 
 /**
  * Exports pages from shopify store -> shopify store.

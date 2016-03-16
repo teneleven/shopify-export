@@ -1,4 +1,5 @@
 <?php
+
 namespace Shopify;
 
 use GuzzleHttp\ClientInterface;
@@ -90,29 +91,14 @@ class Shopify
 
     public function createArticle($blogID, $article)
     {
-        $params = $this->toParams('article', $article);
-
-        if (isset($params['article']['blog_id'])) {
-            unset($params['article']['blog_id']);
-        }
-
-        $request = new Request('POST', 'blogs/'.$blogID.'/articles.json', $params);
+        $request = new Api\ArticleRequest('POST', 'blogs/'.$blogID.'/articles.json', (array) $article);
 
         return $this->submitRequest($request);
     }
 
     public function updateArticle($blogID, $articleID, $article)
     {
-        $params = $this->toParams('article', $article);
-
-        if (isset($params['article']['blog_id'])) {
-            unset($params['article']['blog_id']);
-        }
-
-        $params['article']['id'] = $articleID;
-        $params['article']['blog_id'] = $blogID;
-
-        $request = new Request('PUT', 'blogs/'.$blogID.'/articles/'.$articleID.'.json', $params);
+        $request = new Api\ArticleRequest('PUT', 'blogs/'.$blogID.'/articles/'.$articleID.'.json', (array) $article);
 
         return $this->submitRequest($request);
     }
@@ -144,14 +130,14 @@ class Shopify
 
     public function createPage($page)
     {
-        $request = new Request('POST', 'pages.json', $this->toParams('page', $page));
+        $request = new Api\PageRequest('POST', 'pages.json', (array) $page);
 
         return $this->submitRequest($request);
     }
 
     public function updatePage($pageID, $page)
     {
-        $request = new Request('PUT', 'pages/'.$pageID.'.json', $this->toParams('page', $page));
+        $request = new Api\PageRequest('PUT', 'pages/'.$pageID.'.json', (array) $page);
 
         return $this->submitRequest($request);
     }
@@ -442,7 +428,7 @@ class Shopify
             return $response->getResults();
         } catch (ClientException $e) {
             if ($this->debug) {
-                echo "API Error: ".$e->getResponse()->getBody()."\n";
+                echo 'API Error: '.$e->getResponse()->getBody()."\n";
             } else {
                 throw $e;
             }
@@ -452,16 +438,5 @@ class Shopify
     private function paginate(Request $request)
     {
         return new Paginator\Paginator($this->client, $request);
-    }
-
-    private function toParams($param, $valueObject)
-    {
-        if (array_key_exists($param, (array) $valueObject)) {
-            $params = (array) $valueObject;
-        } else {
-            $params = [$param => (array) $valueObject];
-        }
-
-        return $params;
     }
 }
